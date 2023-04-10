@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Adresse IP et port pour le serveur
+IP=192.168.1.10
+PORT=80
+
+# État initial du relais
+relay_state=0
+
+# Fonction pour mettre à jour l'état du relais
+function update_relay() {
+  relay_state=$1
+  echo "Relais : $relay_state"
+}
+
+# Boucle principale
+while true; do
+  # Attente de la connexion d'un client
+  echo "En attente de connexion..."
+  # Création d'un pseudo-serveur sur le port spécifié
+  server=$(mkfifo /tmp/server)
+  cat /tmp/server | nc -l $PORT > /dev/null &
+  nc_pid=$!
+
+  # Lecture des données envoyées par le client
+  client=$(mkfifo /tmp/client)
+  cat $client | nc $IP $PORT > /tmp/server &
+  nc_pid2=$!
+  echo "Envoi de la commande : 1" > $client
+  sleep 1
+  echo "Envoi de la commande : 0" > $client
+  sleep 1
+
+  # Fermeture de la connexion
+  rm -f /tmp/client
+  kill $nc_pid2
+
+  # Mise à jour de l'état du relais
+  update_relay $relay_state
+
+  # Fermeture du pseudo-serveur
+  rm -f /tmp/server
+  kill $nc_pid
+done
+```
+
+Ce script utilise les commandes `mkfifo` et `nc` pour créer un pseudo-serveur sur le port spécifié et simuler les échanges Wi-Fi entre la carte ESP8266 D1 Mini et un client.
+
+Dans la boucle principale, le script attend la connexion d'un client en créant un fifo nommé `server` et en redirigeant les entrées de `nc` vers `/dev/null`. Ensuite, il crée un fifo nommé `client`, envoie les commandes "1" et "0" à la carte ESP8266 D1 Mini en utilisant `nc`, puis ferme la connexion en supprimant le fifo `client` et en tuant le processus `nc`.
+
+Après avoir simulé les échanges Wi-Fi, le script met à jour l'état du relais en appelant la fonction `update_relay` et ferme le pseudo-serveur en supprimant le fifo `server` et en tuant le processus `nc`.
+
+Notez que ce script ne simule pas les commandes et les réponses exactes envoyées par la carte ESP8266 D1 Mini, mais plutôt les échanges de données brutes sur le protocole TCP/IP.

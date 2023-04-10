@@ -1,0 +1,37 @@
+Voici une modification du script Bash pour piloter le relais automatiquement de 20h à 00h :
+
+```
+#!/bin/bash
+
+# Adresse IP et port de la carte ESP8266 D1 Mini
+IP=192.168.1.10
+PORT=80
+
+# Fonction pour envoyer une commande au serveur
+function send_command {
+  echo "Envoi de la commande : $1"
+  echo -n "$1" | nc $IP $PORT
+}
+
+# Boucle principale
+while true; do
+  # Vérification de l'heure
+  hour=$(date +%H)
+  if (( hour >= 20 && hour < 24 )); then
+    # Allumage du relais
+    send_command 1
+  else
+    # Extinction du relais
+    send_command 0
+  fi
+
+  # Attente de 5 minutes
+  sleep 300
+done
+```
+
+Dans cette version, la boucle principale vérifie l'heure actuelle à l'aide de la commande `date +%H`. Si l'heure est entre 20h et minuit, la fonction `send_command` est appelée avec une commande de 1 pour allumer le relais. Sinon, la fonction `send_command` est appelée avec une commande de 0 pour éteindre le relais.
+
+Le script attend ensuite pendant 5 minutes à l'aide de la commande `sleep 300` avant de recommencer la boucle et de vérifier à nouveau l'heure.
+
+Notez que cette version du script ne demande pas d'entrée utilisateur et fonctionne en mode automatique.
